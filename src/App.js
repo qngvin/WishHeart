@@ -4,7 +4,7 @@ import Guest from "./Guest";
 import Sign from "./Sign";
 import Heart from "./Heart";
 import { auth } from "./firebase";
-
+import "./App.css"
 function App() {
   const [user, setUser] = useState(null);
 

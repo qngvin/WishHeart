@@ -2,12 +2,23 @@ import React, { useEffect, useState } from "react";
 import { signOut } from "firebase/auth";
 import { auth, db } from "./firebase";
 import { useNavigate } from "react-router-dom";
-import { onValue, ref } from "firebase/database";
-
+import { onValue, orderByChild, query, ref } from "firebase/database";
+import { Modal, Table } from "antd";
+import { CiLogout } from "react-icons/ci";
 function Heart() {
   const navigate = useNavigate();
   const [hearts, setHearts] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedHeart, setSelectedHeart] = useState(null);
 
+  const showModal = (heart) => {
+    setSelectedHeart(heart);
+    setModalVisible(true);
+  };
+
+  const handleCancel = () => {
+    setModalVisible(false);
+  };
   const logout = async () => {
     try {
       await signOut(auth);
@@ -18,26 +29,73 @@ function Heart() {
   };
 
   useEffect(() => {
-    const unsubscribe = onValue(ref(db), (snapshot) => {
-      const data = snapshot.val();
-      if (data !== null) {
-        const heartArray = Object.values(data);
-        setHearts(heartArray);
+    const unsubscribe = onValue(
+      query(ref(db), orderByChild("timestamp")),
+      (snapshot) => {
+        const data = snapshot.val();
+        if (data !== null) {
+          const heartArray = Object.values(data).sort(
+            (a, b) => b.timestamp - a.timestamp
+          );
+
+          setHearts(heartArray);
+        }
       }
-    });
+    );
 
-    return () => unsubscribe(); // Cleanup function to unsubscribe when the component is unmounted
-  }, []); // Dependency array rỗng để đảm bảo useEffect chỉ chạy một lần khi component được render
-
-  return (
-    <div>
-      <h1>Hi there!</h1>
-      {hearts.map((heart) => (
-        <div key={heart.uuid}>
-          <p>{heart.heart}</p>
+    return () => unsubscribe();
+  }, []);
+  const dataSource = hearts.map((heart) => ({
+    key: heart.uuid,
+    currentDate: heart.currentDate,
+    heart: heart.heart,
+  }));
+  const columns = [
+    {
+      title: "Date",
+      dataIndex: "currentDate",
+      key: "currentDate",
+      width: "20%",
+    },
+    {
+      title: "Heart",
+      dataIndex: "heart",
+      key: "heart",
+      width: "80%",
+      render: (text, record) => (
+        <div
+          className="cursor-pointer overflow-hidden line-clamp-3"
+          onClick={() => showModal(record)}
+        >
+          {text}
         </div>
-      ))}
-      <button onClick={logout}>Logout</button>
+      ),
+    },
+  ];
+  return (
+    <div className="bg-color_1 h-screen w-full relative p-20">
+      <div className="bg-white w-2/4 mx-auto p-8 rounded-[20px] shadow-box_shadow_1">
+        <Table
+          dataSource={dataSource}
+          columns={columns}
+          pagination={{ pageSize: 5 }}
+        />
+      </div>
+      <Modal
+        title="Heart"
+        visible={modalVisible}
+        onCancel={handleCancel}
+        footer={null}
+      >
+        {selectedHeart && (
+          <div>
+            <p>{selectedHeart.heart}</p>
+          </div>
+        )}
+      </Modal>
+      <button  onClick={logout}>
+        <CiLogout className="text-[30px] " />
+      </button>
     </div>
   );
 }
