@@ -31,6 +31,7 @@ function Guest() {
 
   return (
     <div className="bg-color_1 h-screen w-full relative">
+      <img className="h-[400px] w-[400px]" src="/public/logo192.png" />
       <div className="w-[400px] p-2  bg-white absolute top-[50%] left-[10%]  border-solid rounded-[10px] shadow-box_shadow_1  ">
         <TextArea
           className="mb-4"
